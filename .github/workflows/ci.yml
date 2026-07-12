@@ -1,0 +1,20 @@
+name: CI
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      # The wire_format snapshot test is the protocol drift guard: it fails on
+      # any change to the serialized shape unless the snapshot (and the
+      # protocol version) were deliberately regenerated.
+      - run: cargo test
+      - run: cargo fmt --check
+        continue-on-error: true
