@@ -13,6 +13,7 @@ use specta::Type;
 
 use crate::gateway::Gateway;
 use crate::os::ClientOs;
+use crate::auth::{ConnectAuthRequest, ProbeRequest};
 use crate::state::ConnectInfo;
 
 /// Generates `pub fn field(&self) -> Type` accessors that clone the field.
@@ -204,6 +205,10 @@ pub enum WsRequest {
   Connect(Box<ConnectRequest>),
   Disconnect(DisconnectRequest),
   UpdateLogLevel(UpdateLogLevelRequest),
+  /// v3: run prelogin and report the required auth (see [`crate::auth`]).
+  Probe(Box<ProbeRequest>),
+  /// v3: authenticate with a captured credential and start the tunnel.
+  ConnectAuth(Box<ConnectAuthRequest>),
 }
 
 #[cfg(test)]

@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::auth::ProbeReply;
 use crate::env::VpnEnv;
 use crate::state::VpnState;
 
@@ -20,4 +21,6 @@ pub enum WsEvent {
   /// The backend asks the client to re-establish the previous connection
   /// (e.g. after a SIGUSR2-style external trigger).
   ResumeConnection,
+  /// v3: the result of a [`WsRequest::Probe`](crate::request::WsRequest).
+  ProbeResult(ProbeReply),
 }

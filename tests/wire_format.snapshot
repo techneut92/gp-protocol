@@ -1,4 +1,4 @@
-# gp-protocol wire format — protocol 2..=2
+# gp-protocol wire format — protocol 2..=3
 # Generated: UPDATE_WIRE_SNAPSHOT=1 cargo test -p gp-protocol --test wire_format
 
 ## WsRequest::Connect
@@ -70,7 +70,7 @@
 {
   "VpnEnv": {
     "protocol_min": 2,
-    "protocol_max": 2,
+    "protocol_max": 3,
     "vpn_state": {
       "connected": {
         "info": {
@@ -222,3 +222,83 @@
 
 ## WsEvent::ResumeConnection
 "ResumeConnection"
+
+## WsRequest::Probe
+{
+  "Probe": {
+    "server": "vpn.example.com",
+    "certificate": "pkcs11:id=%03",
+    "sslkey": null,
+    "keyPassword": null,
+    "ignoreTlsErrors": false,
+    "os": "Linux",
+    "osVersion": "Linux",
+    "userAgent": "PAN GlobalProtect"
+  }
+}
+
+## WsRequest::ConnectAuth
+{
+  "ConnectAuth": {
+    "server": "vpn.example.com",
+    "credential": {
+      "kind": "certOnly"
+    },
+    "certificate": "pkcs11:id=%03",
+    "sslkey": null,
+    "keyPassword": null,
+    "ignoreTlsErrors": false,
+    "os": "Linux",
+    "osVersion": "Linux",
+    "userAgent": "PAN GlobalProtect",
+    "args": {
+      "cookie": "",
+      "vpnc_script": null,
+      "user_agent": null,
+      "os": null,
+      "os_version": null,
+      "client_version": null,
+      "certificate": null,
+      "sslkey": null,
+      "key_password": null,
+      "hip": false,
+      "csd_uid": 0,
+      "csd_wrapper": null,
+      "reconnect_timeout": 300,
+      "mtu": 0,
+      "disable_ipv6": false,
+      "no_dtls": false,
+      "local_hostname": null,
+      "force_dpd": 0,
+      "no_xmlpost": false,
+      "allowExtendSession": false
+    }
+  }
+}
+
+## WsEvent::ProbeResult(Saml)
+{
+  "ProbeResult": {
+    "kind": "saml",
+    "saml_request": "<saml>request</saml>",
+    "supports_browser": true
+  }
+}
+
+## WsEvent::ProbeResult(Standard)
+{
+  "ProbeResult": {
+    "kind": "standard",
+    "username_label": "Username",
+    "password_label": "Password"
+  }
+}
+
+## WsEvent::ProbeResult(Error)
+{
+  "ProbeResult": {
+    "kind": "error",
+    "message": "prelogin failed",
+    "cert_needed": true
+  }
+}

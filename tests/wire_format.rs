@@ -99,6 +99,34 @@ fn json<T: serde::Serialize>(value: &T) -> String {
   serde_json::to_string_pretty(value).expect("serialize")
 }
 
+fn sample_probe_request() -> ProbeRequest {
+  ProbeRequest {
+    server: "vpn.example.com".to_string(),
+    certificate: Some("pkcs11:id=%03".to_string()),
+    sslkey: None,
+    key_password: None,
+    ignore_tls_errors: false,
+    os: Some(ClientOs::Linux),
+    os_version: Some("Linux".to_string()),
+    user_agent: Some("PAN GlobalProtect".to_string()),
+  }
+}
+
+fn sample_connect_auth_request() -> ConnectAuthRequest {
+  ConnectAuthRequest {
+    server: "vpn.example.com".to_string(),
+    credential: AuthCredential::CertOnly,
+    certificate: Some("pkcs11:id=%03".to_string()),
+    sslkey: None,
+    key_password: None,
+    ignore_tls_errors: false,
+    os: Some(ClientOs::Linux),
+    os_version: Some("Linux".to_string()),
+    user_agent: Some("PAN GlobalProtect".to_string()),
+    args: ConnectArgs::new(String::new()),
+  }
+}
+
 fn render_snapshot() -> String {
   let samples: Vec<(&str, String)> = vec![
     (
@@ -127,6 +155,32 @@ fn render_snapshot() -> String {
     ),
     ("WsEvent::ActiveGui", json(&WsEvent::ActiveGui)),
     ("WsEvent::ResumeConnection", json(&WsEvent::ResumeConnection)),
+    ("WsRequest::Probe", json(&WsRequest::Probe(Box::new(sample_probe_request())))),
+    (
+      "WsRequest::ConnectAuth",
+      json(&WsRequest::ConnectAuth(Box::new(sample_connect_auth_request()))),
+    ),
+    (
+      "WsEvent::ProbeResult(Saml)",
+      json(&WsEvent::ProbeResult(ProbeReply::Saml {
+        saml_request: "<saml>request</saml>".to_string(),
+        supports_browser: true,
+      })),
+    ),
+    (
+      "WsEvent::ProbeResult(Standard)",
+      json(&WsEvent::ProbeResult(ProbeReply::Standard {
+        username_label: "Username".to_string(),
+        password_label: "Password".to_string(),
+      })),
+    ),
+    (
+      "WsEvent::ProbeResult(Error)",
+      json(&WsEvent::ProbeResult(ProbeReply::Error {
+        message: "prelogin failed".to_string(),
+        cert_needed: true,
+      })),
+    ),
   ];
 
   let mut out = format!("# gp-protocol wire format — protocol {PROTOCOL_MIN}..={PROTOCOL_MAX}\n");

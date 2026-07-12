@@ -34,7 +34,11 @@ pub const PROTOCOL_MIN: u32 = 2;
 /// change; the handshake negotiates downward within `MIN..=MAX`.
 ///
 /// v2: added `VpnState::Reconnecting(ConnectedInfo)`.
-pub const PROTOCOL_MAX: u32 = 2;
+/// v3: added the auth handoff — `WsRequest::{Probe,ConnectAuth}` and
+/// `WsEvent::ProbeResult` (see [`auth`]). MIN stays 2: the additions are
+/// backward-compatible request/response types an older backend simply never
+/// receives, so a v2 peer keeps working.
+pub const PROTOCOL_MAX: u32 = 3;
 
 /// The current protocol version — alias for [`PROTOCOL_MAX`].
 pub const PROTOCOL_VERSION: u32 = PROTOCOL_MAX;
@@ -45,6 +49,7 @@ pub(crate) fn protocol_baseline() -> u32 {
   1
 }
 
+pub mod auth;
 pub mod env;
 pub mod event;
 pub mod gateway;
@@ -53,6 +58,7 @@ pub mod request;
 pub mod session;
 pub mod state;
 
+pub use auth::{AuthCredential, ConnectAuthRequest, ProbeReply, ProbeRequest};
 pub use env::VpnEnv;
 pub use event::WsEvent;
 pub use gateway::{Gateway, PriorityRule};
