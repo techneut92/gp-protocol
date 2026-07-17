@@ -82,6 +82,7 @@ fn sample_connect_request() -> ConnectRequest {
     .with_force_dpd(30)
     .with_no_xmlpost(true)
     .with_allow_extend_session(true)
+    .with_dns_domains(vec!["corp.acme.example".to_string(), "acme.example".to_string()])
 }
 
 fn sample_vpn_env() -> VpnEnv {

@@ -1,4 +1,4 @@
-# gp-protocol wire format — protocol 2..=3
+# gp-protocol wire format — protocol 2..=4
 # Generated: UPDATE_WIRE_SNAPSHOT=1 cargo test -p gp-protocol --test wire_format
 
 ## WsRequest::Connect
@@ -51,7 +51,11 @@
       "local_hostname": "host",
       "force_dpd": 30,
       "no_xmlpost": true,
-      "allowExtendSession": true
+      "allowExtendSession": true,
+      "dns_domains": [
+        "corp.acme.example",
+        "acme.example"
+      ]
     }
   }
 }
@@ -70,7 +74,7 @@
 {
   "VpnEnv": {
     "protocol_min": 2,
-    "protocol_max": 3,
+    "protocol_max": 4,
     "vpn_state": {
       "connected": {
         "info": {

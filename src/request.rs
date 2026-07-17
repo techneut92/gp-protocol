@@ -71,6 +71,12 @@ pub struct ConnectArgs {
   no_xmlpost: bool,
   #[serde(rename = "allowExtendSession")]
   allow_extend_session: bool,
+  /// v4: domains to scope the tunnel's DNS to (systemd-resolved routing
+  /// domains). Empty means the backend's default behavior (all DNS through
+  /// the tunnel when the gateway sends no split-DNS config). Absent on the
+  /// wire when empty, so older backends never see it.
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  dns_domains: Vec<String>,
 }
 
 impl ConnectArgs {
@@ -96,6 +102,7 @@ impl ConnectArgs {
       force_dpd: 0,
       no_xmlpost: false,
       allow_extend_session: false,
+      dns_domains: Vec::new(),
     }
   }
 
@@ -129,6 +136,7 @@ impl ConnectArgs {
     force_dpd: u32,
     no_xmlpost: bool,
     allow_extend_session: bool,
+    dns_domains: Vec<String>,
   }
 }
 
@@ -176,6 +184,7 @@ impl ConnectRequest {
     with_force_dpd => force_dpd: u32,
     with_no_xmlpost => no_xmlpost: bool,
     with_allow_extend_session => allow_extend_session: bool,
+    with_dns_domains => dns_domains: Vec<String>,
   }
 
   pub fn gateway(&self) -> &Gateway {
@@ -225,6 +234,33 @@ mod tests {
     let value = serde_json::to_value(req).unwrap();
 
     assert_eq!(value["args"]["allowExtendSession"], json!(true));
+  }
+
+  #[test]
+  fn dns_domains_absent_on_the_wire_defaults_to_empty() {
+    // A v3 peer never sends the field; it must deserialize to an empty list.
+    // The field is also skipped when empty, so a v4 sender with no domains
+    // produces byte-identical JSON to a v3 sender.
+    let gateway = Gateway::new("gw".to_string(), "vpn.example.com".to_string());
+    let info = ConnectInfo::new("portal.example.com".to_string(), gateway.clone(), vec![gateway]);
+    let value = serde_json::to_value(ConnectRequest::new(info, "authcookie=AUTH".to_string())).unwrap();
+
+    assert!(value["args"].get("dns_domains").is_none());
+    let req: ConnectRequest = serde_json::from_value(value).unwrap();
+    assert!(req.args().dns_domains().is_empty());
+  }
+
+  #[test]
+  fn dns_domains_roundtrip() {
+    let gateway = Gateway::new("gw".to_string(), "vpn.example.com".to_string());
+    let info = ConnectInfo::new("portal.example.com".to_string(), gateway.clone(), vec![gateway]);
+    let req = ConnectRequest::new(info, "authcookie=AUTH".to_string())
+      .with_dns_domains(vec!["corp.acme.example".to_string()]);
+    let value = serde_json::to_value(&req).unwrap();
+
+    assert_eq!(value["args"]["dns_domains"], json!(["corp.acme.example"]));
+    let back: ConnectRequest = serde_json::from_value(value).unwrap();
+    assert_eq!(back.args().dns_domains(), vec!["corp.acme.example".to_string()]);
   }
 
   #[test]

@@ -38,7 +38,10 @@ pub const PROTOCOL_MIN: u32 = 2;
 /// `WsEvent::ProbeResult` (see [`auth`]). MIN stays 2: the additions are
 /// backward-compatible request/response types an older backend simply never
 /// receives, so a v2 peer keeps working.
-pub const PROTOCOL_MAX: u32 = 3;
+/// v4: added `ConnectArgs::dns_domains` (scoped tunnel DNS). MIN stays 2: the
+/// field is serde-default and skipped when empty, so older peers in either
+/// direction keep working (an older backend simply ignores the scoping).
+pub const PROTOCOL_MAX: u32 = 4;
 
 /// The current protocol version — alias for [`PROTOCOL_MAX`].
 pub const PROTOCOL_VERSION: u32 = PROTOCOL_MAX;
