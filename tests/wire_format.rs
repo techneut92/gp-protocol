@@ -124,7 +124,10 @@ fn sample_connect_auth_request() -> ConnectAuthRequest {
     os: Some(ClientOs::Linux),
     os_version: Some("Linux".to_string()),
     user_agent: Some("PAN GlobalProtect".to_string()),
-    args: ConnectArgs::new(String::new()),
+    // Real clients ship tunnel options through this embedding (the cookie is
+    // filled in backend-side), so pin the full args shape here too — including
+    // v4's dns_domains, which only travels this path in practice.
+    args: sample_connect_request().args().clone(),
   }
 }
 
