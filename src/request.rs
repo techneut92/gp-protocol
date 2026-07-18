@@ -8,8 +8,11 @@
 //! `wire_format` snapshot test); the accessors and the builder are generated
 //! by small local macros.
 
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use zeroize::Zeroize;
 
 use crate::gateway::Gateway;
 use crate::os::ClientOs;
@@ -44,7 +47,10 @@ macro_rules! arg_setters {
 
 /// Tunnel parameters for a connect request. Constructed through
 /// [`ConnectRequest`]'s `with_*` builder methods; read by the backend.
-#[derive(Debug, Deserialize, Serialize, Type, Clone)]
+///
+/// Carries secrets (the gateway auth `cookie`, and `key_password`): its
+/// `Debug` redacts them, and dropping it zeroizes them (see the impls below).
+#[derive(Deserialize, Serialize, Type, Clone)]
 pub struct ConnectArgs {
   cookie: String,
   vpnc_script: Option<String>,
@@ -137,6 +143,48 @@ impl ConnectArgs {
     no_xmlpost: bool,
     allow_extend_session: bool,
     dns_domains: Vec<String>,
+  }
+}
+
+/// Redacts the secrets so a `{:?}` of a request (or anything embedding it,
+/// e.g. [`ConnectAuthRequest`]) can't leak the auth cookie or key password.
+impl fmt::Debug for ConnectArgs {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.debug_struct("ConnectArgs")
+      .field("cookie", &"<redacted>")
+      .field("key_password", &self.key_password.as_ref().map(|_| "<redacted>"))
+      .field("vpnc_script", &self.vpnc_script)
+      .field("user_agent", &self.user_agent)
+      .field("os", &self.os)
+      .field("os_version", &self.os_version)
+      .field("client_version", &self.client_version)
+      .field("certificate", &self.certificate)
+      .field("sslkey", &self.sslkey)
+      .field("hip", &self.hip)
+      .field("csd_uid", &self.csd_uid)
+      .field("csd_wrapper", &self.csd_wrapper)
+      .field("reconnect_timeout", &self.reconnect_timeout)
+      .field("mtu", &self.mtu)
+      .field("disable_ipv6", &self.disable_ipv6)
+      .field("no_dtls", &self.no_dtls)
+      .field("local_hostname", &self.local_hostname)
+      .field("force_dpd", &self.force_dpd)
+      .field("no_xmlpost", &self.no_xmlpost)
+      .field("allow_extend_session", &self.allow_extend_session)
+      .field("dns_domains", &self.dns_domains)
+      .finish()
+  }
+}
+
+/// Best-effort scrub of the secret fields when the args are dropped, so a
+/// backend that holds them for the life of a tunnel doesn't leave the cookie /
+/// key password lingering in freed memory.
+impl Drop for ConnectArgs {
+  fn drop(&mut self) {
+    self.cookie.zeroize();
+    if let Some(key_password) = self.key_password.as_mut() {
+      key_password.zeroize();
+    }
   }
 }
 
@@ -234,6 +282,20 @@ mod tests {
     let value = serde_json::to_value(req).unwrap();
 
     assert_eq!(value["args"]["allowExtendSession"], json!(true));
+  }
+
+  #[test]
+  fn debug_redacts_the_secrets() {
+    let gateway = Gateway::new("gw".to_string(), "vpn.example.com".to_string());
+    let info = ConnectInfo::new("portal.example.com".to_string(), gateway.clone(), vec![gateway]);
+    let req = ConnectRequest::new(info, "authcookie=SUPERSECRET".to_string()).with_key_password("hunter2".to_string());
+    let dbg = format!("{:?}", req.args());
+    assert!(!dbg.contains("SUPERSECRET"), "cookie leaked in Debug: {dbg}");
+    assert!(!dbg.contains("hunter2"), "key_password leaked in Debug: {dbg}");
+    assert!(dbg.contains("<redacted>"));
+    // Serialization must still carry the real value (Debug redaction only).
+    let json = serde_json::to_value(req.args()).unwrap();
+    assert_eq!(json["cookie"], "authcookie=SUPERSECRET");
   }
 
   #[test]
