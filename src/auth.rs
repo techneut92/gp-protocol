@@ -16,13 +16,24 @@ use specta::Type;
 use crate::os::ClientOs;
 use crate::request::ConnectArgs;
 
+/// serde default for `as_gateway`: absent on the wire (a pre-v5 peer) means
+/// the original direct-gateway behavior, so it must default to `true`.
+fn default_as_gateway() -> bool {
+  true
+}
+
 /// Ask the backend to run prelogin against a portal/gateway and report which
 /// kind of authentication the server wants.
 #[derive(Debug, Serialize, Deserialize, Type, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ProbeRequest {
-  /// Server to probe. Treated as a gateway (the direct-gateway flow).
+  /// Server to probe.
   pub server: String,
+  /// v5: whether `server` is a gateway (direct-gateway flow, the default) or a
+  /// portal (portal prelogin, then a gateway list). Absent on the wire ⇒ true,
+  /// so pre-v5 peers keep the gateway behavior.
+  #[serde(default = "default_as_gateway")]
+  pub as_gateway: bool,
   /// Client certificate for the prelogin mTLS: a `pkcs11:` URI (with
   /// `?pin-value=…`) or a path to a PEM/PKCS#12 file readable by the backend.
   pub certificate: Option<String>,
@@ -75,6 +86,12 @@ pub enum AuthCredential {
 pub struct ConnectAuthRequest {
   pub server: String,
   pub credential: AuthCredential,
+  /// v5: whether `server` is a gateway (default) or a portal. When false the
+  /// backend runs the portal flow — retrieve the gateway list with the
+  /// credential, pick a gateway, and log in with the portal cookie. Absent on
+  /// the wire ⇒ true (pre-v5 peers keep the gateway behavior).
+  #[serde(default = "default_as_gateway")]
+  pub as_gateway: bool,
   /// Prelogin/mTLS context — the same fields the probe used.
   pub certificate: Option<String>,
   pub sslkey: Option<String>,

@@ -103,6 +103,7 @@ fn json<T: serde::Serialize>(value: &T) -> String {
 fn sample_probe_request() -> ProbeRequest {
   ProbeRequest {
     server: "vpn.example.com".to_string(),
+    as_gateway: true,
     certificate: Some("pkcs11:id=%03".to_string()),
     sslkey: None,
     key_password: None,
@@ -117,6 +118,7 @@ fn sample_connect_auth_request() -> ConnectAuthRequest {
   ConnectAuthRequest {
     server: "vpn.example.com".to_string(),
     credential: AuthCredential::CertOnly,
+    as_gateway: false,
     certificate: Some("pkcs11:id=%03".to_string()),
     sslkey: None,
     key_password: None,
