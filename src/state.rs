@@ -21,6 +21,11 @@ pub enum VpnState {
   /// last `ConnectedInfo` so the UI keeps showing the gateway/session details.
   /// Wire-protocol v2 addition.
   Reconnecting(Box<ConnectedInfo>),
+  /// The gateway issued an interactive MFA / one-time-code challenge mid-connect
+  /// (RSA SecurID, TOTP, SMS). The GUI prompts for the code and answers via the
+  /// transport's `submit_mfa` method; the backend then resubmits the gateway
+  /// login and continues. Wire-protocol v6 addition.
+  MfaChallenge(Box<MfaChallengeInfo>),
   Disconnecting,
 }
 
@@ -32,8 +37,28 @@ impl VpnState {
       VpnState::Connecting(_) => "Connecting…",
       VpnState::Connected(_) => "Connected",
       VpnState::Reconnecting(_) => "Reconnecting…",
+      VpnState::MfaChallenge(_) => "Verification required…",
       VpnState::Disconnecting => "Disconnecting…",
     }
+  }
+}
+
+/// An interactive MFA/token challenge the gateway issued mid-connect. Only the
+/// prompt is sent to the GUI; the backend keeps the internal challenge token it
+/// needs to resubmit the login.
+#[derive(Debug, Deserialize, Serialize, Type, Clone)]
+pub struct MfaChallengeInfo {
+  /// The gateway/IdP prompt, e.g. "Enter your RSA passcode".
+  message: String,
+}
+
+impl MfaChallengeInfo {
+  pub fn new(message: impl Into<String>) -> Self {
+    Self { message: message.into() }
+  }
+
+  pub fn message(&self) -> &str {
+    &self.message
   }
 }
 

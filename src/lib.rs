@@ -38,13 +38,15 @@ pub const PROTOCOL_MIN: u32 = 2;
 /// `WsEvent::ProbeResult` (see [`auth`]). MIN stays 2: the additions are
 /// backward-compatible request/response types an older backend simply never
 /// receives, so a v2 peer keeps working.
-/// v4: added `ConnectArgs::dns_domains` (scoped tunnel DNS). MIN stays 2: the
-/// field is serde-default and skipped when empty, so older peers in either
-/// direction keep working (an older backend simply ignores the scoping).
-/// v5: added `as_gateway` to `ProbeRequest`/`ConnectAuthRequest` (portal vs
-/// direct-gateway). MIN stays 2: the field serde-defaults to true, so a pre-v5
-/// GUI keeps the gateway behavior and a pre-v5 backend ignores it.
-pub const PROTOCOL_MAX: u32 = 5;
+/// v4: the first post-v3 bump — prod ships v3, so everything added on the
+/// (unreleased) feature branches is bundled into a single new version rather
+/// than one bump each: `ConnectArgs::dns_domains` (scoped tunnel DNS),
+/// `as_gateway` on `ProbeRequest`/`ConnectAuthRequest` (portal vs direct
+/// gateway), and `VpnState::MfaChallenge` + the `submit_mfa`/`resend_mfa`
+/// transport methods (interactive MFA). MIN stays 2: all are serde-default /
+/// handshake-gated, so a v3 peer keeps working. (The interim crates 1.2.0/1.3.0/
+/// 1.4.0 that split these across v4/v5/v6 were never released and are yanked.)
+pub const PROTOCOL_MAX: u32 = 4;
 
 /// The current protocol version — alias for [`PROTOCOL_MAX`].
 pub const PROTOCOL_VERSION: u32 = PROTOCOL_MAX;
@@ -71,4 +73,4 @@ pub use gateway::{Gateway, PriorityRule};
 pub use os::ClientOs;
 pub use request::{ConnectArgs, ConnectRequest, DisconnectRequest, UpdateLogLevelRequest, WsRequest};
 pub use session::{format_duration_secs, SessionInfo, SessionWarning};
-pub use state::{ConnectInfo, ConnectedInfo, VpnState};
+pub use state::{ConnectInfo, ConnectedInfo, MfaChallengeInfo, VpnState};

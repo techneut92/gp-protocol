@@ -1,4 +1,4 @@
-# gp-protocol wire format — protocol 2..=5
+# gp-protocol wire format — protocol 2..=4
 # Generated: UPDATE_WIRE_SNAPSHOT=1 cargo test -p gp-protocol --test wire_format
 
 ## WsRequest::Connect
@@ -74,7 +74,7 @@
 {
   "VpnEnv": {
     "protocol_min": 2,
-    "protocol_max": 5,
+    "protocol_max": 4,
     "vpn_state": {
       "connected": {
         "info": {
