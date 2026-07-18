@@ -41,7 +41,10 @@ pub const PROTOCOL_MIN: u32 = 2;
 /// v4: added `ConnectArgs::dns_domains` (scoped tunnel DNS). MIN stays 2: the
 /// field is serde-default and skipped when empty, so older peers in either
 /// direction keep working (an older backend simply ignores the scoping).
-pub const PROTOCOL_MAX: u32 = 4;
+/// v5: added `as_gateway` to `ProbeRequest`/`ConnectAuthRequest` (portal vs
+/// direct-gateway). MIN stays 2: the field serde-defaults to true, so a pre-v5
+/// GUI keeps the gateway behavior and a pre-v5 backend ignores it.
+pub const PROTOCOL_MAX: u32 = 5;
 
 /// The current protocol version — alias for [`PROTOCOL_MAX`].
 pub const PROTOCOL_VERSION: u32 = PROTOCOL_MAX;
