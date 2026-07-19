@@ -2,8 +2,7 @@
 name = "gp-protocol"
 # Crate version — independent of any client/backend release version.
 # The wire-protocol version is negotiated at runtime (see src/lib.rs).
-# Beta pre-release: MFA challenge (wire v6). Not final-published until validated.
-version = "1.5.0-beta.1"
+version = "1.5.0"
 edition = "2021"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
