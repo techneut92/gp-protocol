@@ -26,6 +26,13 @@ pub enum VpnState {
   /// transport's `submit_mfa` method; the backend then resubmits the gateway
   /// login and continues. Wire-protocol v6 addition.
   MfaChallenge(Box<MfaChallengeInfo>),
+  /// Portal mode returned more than one gateway and the client should choose.
+  /// Same shape as `Connecting`: `gateway` is the region-preferred pick (the
+  /// GUI pre-selects it), `gateways` the full portal list. The GUI answers via
+  /// the transport's `select_gateway` method with the chosen gateway's address;
+  /// the backend then logs into that gateway and continues. Ships within the
+  /// current (pre-release) protocol range.
+  GatewaySelect(Box<ConnectInfo>),
   Disconnecting,
 }
 
@@ -38,6 +45,7 @@ impl VpnState {
       VpnState::Connected(_) => "Connected",
       VpnState::Reconnecting(_) => "Reconnecting…",
       VpnState::MfaChallenge(_) => "Verification required…",
+      VpnState::GatewaySelect(_) => "Choose a gateway…",
       VpnState::Disconnecting => "Disconnecting…",
     }
   }
@@ -86,6 +94,11 @@ impl ConnectInfo {
 
   pub fn gateway(&self) -> &Gateway {
     &self.gateway
+  }
+
+  /// Every gateway the portal offered (empty in direct-gateway mode).
+  pub fn gateways(&self) -> &[Gateway] {
+    &self.gateways
   }
 }
 
